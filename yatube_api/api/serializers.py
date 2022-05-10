@@ -5,7 +5,6 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     posts = serializers.StringRelatedField(
         many=True,
-        read_only=True,
         required=False,
     )
 
@@ -22,7 +21,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField(read_only=True)
+    author = serializers.StringRelatedField()
 
     class Meta:
         model = Comment
@@ -31,7 +30,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField(read_only=True)
+    author = serializers.StringRelatedField()
     image = serializers.ImageField(required=False, read_only=True)
 
     class Meta:
