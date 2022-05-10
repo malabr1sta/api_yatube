@@ -1,7 +1,7 @@
-from posts.models import Comment, Group, Post, User
-from rest_framework.exceptions import PermissionDenied
+from posts.models import Group, Post, User
 from rest_framework import viewsets
 
+from .permissions import IsOwnerOrReadOnly
 from .serializers import (CommentSerializer, GroupSerializer, PostSerializer,
                           UserSerializer)
 
@@ -9,19 +9,10 @@ from .serializers import (CommentSerializer, GroupSerializer, PostSerializer,
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+    permission_classes = (IsOwnerOrReadOnly,)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise PermissionDenied('Чужое не трогать, только смотреть')
-        super(PostViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, instance):
-        if instance.author != self.request.user:
-            raise PermissionDenied('Чужое не трогать, только смотреть')
-        super(PostViewSet, self).perform_destroy(instance)
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,22 +27,13 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = (IsOwnerOrReadOnly,)
 
     def get_queryset(self):
-        post_id = self.kwargs.get('post_id')
-        new_queryset = Comment.objects.filter(post=post_id)
+        post = Post.objects.get(pk=self.kwargs.get('post_id'))
+        new_queryset = post.comments.all()
         return new_queryset
 
     def perform_create(self, serializer):
         post = Post.objects.get(pk=self.kwargs.get('post_id'))
         serializer.save(author=self.request.user, post=post)
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise PermissionDenied('Чужое не трогать, только смотреть')
-        super(CommentViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, instance):
-        if instance.author != self.request.user:
-            raise PermissionDenied('Чужое не трогать, только смотреть')
-        super(CommentViewSet, self).perform_destroy(instance)
